@@ -17,7 +17,6 @@ class TestRoutes(TestCase):
         cls.note = Note.objects.create(
             title='Заголовок', text='Текст', author=cls.author
         )
-        cls.non_author = User.objects.create(username='Peter Pan')
 
     def test_pages_availability(self):
         urls = ('users:login', 'users:logout', 'users:signup', 'notes:home')
@@ -27,13 +26,14 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_notes_pages_availability(self):
+    def test_notes_author_pages_availability(self):
         urls = (
             ('notes:add', None),
             ('notes:edit', (self.note.slug,)),
             ('notes:detail', (self.note.slug,)),
             ('notes:delete', (self.note.slug,)),
             ('notes:list', None),
+            ('notes:success', None)
         )
         for user, status in ((self.author, HTTPStatus.OK),):
             self.client.force_login(user)
@@ -51,6 +51,7 @@ class TestRoutes(TestCase):
             ('notes:detail', (self.note.slug,)),
             ('notes:delete', (self.note.slug,)),
             ('notes:list', None),
+            ('notes:success', None)
         )
         for name, args in urls:
             with self.subTest(name=name):
