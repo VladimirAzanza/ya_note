@@ -20,6 +20,13 @@ class TestNoteCreation(TestCase):
             'author': cls.author
         }
 
+    def test_creation_of_slug(self):
+        self.client.force_login(self.author)
+        url = reverse('notes:add')
+        self.client.post(url, data=self.form_data)
+        notes_created = Note.objects.filter(author=self.author)
+        self.assertIsNotNone(notes_created[0].slug)
+
     def test_redirect_after_creation(self):
         self.client.force_login(self.author)
         url = reverse('notes:add')
