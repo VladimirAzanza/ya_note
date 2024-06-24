@@ -32,15 +32,12 @@ class TestRoutes(TestCase):
             (self.author, HTTPStatus.OK),
             (self.non_author, HTTPStatus.NOT_FOUND)
         )
-        urls = (
-            ('notes:edit', (self.note.slug,)),
-            ('notes:detail', (self.note.slug,)),
-            ('notes:delete', (self.note.slug,)),
-        )
+        urls = ('notes:edit', 'notes:detail', 'notes:delete')
         for user, status in user_statuses:
             self.client.force_login(user)
-            for name, args in urls:
+            for name in urls:
                 with self.subTest(user=user, name=name):
-                    url = reverse(name, args=args)
+                    url = reverse(name, args=(self.note.slug,))
                     response = self.client.get(url)
                     self.assertEqual(response.status_code, status)
+
