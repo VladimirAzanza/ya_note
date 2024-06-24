@@ -17,19 +17,30 @@ class TestRoutes(TestCase):
         cls.note = Note.objects.create(
             title='Заголовок', text='Текст', author=cls.author
         )
+        cls.non_author = User.objects.create(username='Peter Pan')
 
-    def test_auth_urls(self):
-        urls = (
-            'users:login', 'users:logout', 'users:signup'
-        )
+    def test_pages_availability(self):
+        urls = ('users:login', 'users:logout', 'users:signup', 'notes:home')
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_route(self): #aqui revisar edit note delete para solo el usuario
-        self.client.force_login(self.author)
-        url = reverse('notes:edit', args=(self.note.slug,))
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, HTTPStatus.OK)
+    def test_notes_pages_availability(self):
+        user_statuses = (
+            (self.author, HTTPStatus.OK),
+            (self.non_author, HTTPStatus.NOT_FOUND)
+        )
+        urls = (
+            ('notes:edit', (self.note.slug,)),
+            ('notes:detail', (self.note.slug,)),
+            ('notes:delete', (self.note.slug,)),
+        )
+        for user, status in user_statuses:
+            self.client.force_login(user)
+            for name, args in urls:
+                with self.subTest(user=user, name=name):
+                    url = reverse(name, args=args)
+                    response = self.client.get(url)
+                    self.assertEqual(response.status_code, status)
