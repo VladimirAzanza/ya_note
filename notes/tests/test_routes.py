@@ -27,7 +27,7 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_notes_pages_availability(self):
+    def test_notes_edit_detail_delete_availability(self):
         user_statuses = (
             (self.author, HTTPStatus.OK),
             (self.non_author, HTTPStatus.NOT_FOUND)
