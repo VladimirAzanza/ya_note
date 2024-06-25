@@ -26,7 +26,7 @@ class TestRoutes(TestCase):
             ('notes:success', None)
         )
 
-    def test_auth_pages_availability(self):
+    def test_authentification_pages_availability(self):
         urls = (
             'users:login',
             'users:logout',
