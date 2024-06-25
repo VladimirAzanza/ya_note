@@ -40,13 +40,12 @@ class TestRoutes(TestCase):
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_notes_author_pages_availability(self):
-        for user, status in ((self.author, HTTPStatus.OK),):
-            self.client.force_login(user)
-            for name, args in self.notes_urls:
-                with self.subTest(user=user, name=name):
-                    url = reverse(name, args=args)
-                    response = self.client.get(url)
-                    self.assertEqual(response.status_code, status)
+        self.client.force_login(self.author)
+        for name, args in self.notes_urls:
+            with self.subTest(name=name, args=args):
+                url = reverse(name, args=args)
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_redirect_for_anonymous_client(self):
         login_url = reverse('users:login')
