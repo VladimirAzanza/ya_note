@@ -33,9 +33,8 @@ class TestNoteCreation(TestCase):
 
     def test_redirect_after_creation(self):
         url = reverse('notes:add')
-        redirect_url = reverse('notes:success')
         response = self.auth_client.post(url, data=self.form_data)
-        self.assertRedirects(response, redirect_url)
+        self.assertRedirects(response, reverse('notes:success'))
 
     def test_anonymous_user_cant_create_note(self):
         url = reverse('notes:add')
