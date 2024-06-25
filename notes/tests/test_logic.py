@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -22,16 +23,18 @@ class TestNoteCreation(TestCase):
         cls.auth_client = Client()
         cls.auth_client.force_login(cls.author)
 
-    def test_creation_of_slug(self):
+    def test_creation_of_unique_slug(self):
         url = reverse('notes:add')
         self.auth_client.post(url, data=self.form_data)
         notes_created = Note.objects.filter(author=self.author)
         self.assertIsNotNone(notes_created[0].slug)
+        self.auth_client.post(url, data=self.form_data)
+        self.assertRaises(ValidationError)
 
     def test_redirect_after_creation(self):
         url = reverse('notes:add')
-        response = self.auth_client.post(url, data=self.form_data)
         redirect_url = reverse('notes:success')
+        response = self.auth_client.post(url, data=self.form_data)
         self.assertRedirects(response, redirect_url)
 
     def test_anonymous_user_cant_create_note(self):

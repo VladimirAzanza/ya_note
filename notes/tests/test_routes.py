@@ -26,8 +26,13 @@ class TestRoutes(TestCase):
             ('notes:success', None)
         )
 
-    def test_pages_availability(self):
-        urls = ('users:login', 'users:logout', 'users:signup', 'notes:home')
+    def test_auth_pages_availability(self):
+        urls = (
+            'users:login',
+            'users:logout',
+            'users:signup',
+            'notes:home'
+        )
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
