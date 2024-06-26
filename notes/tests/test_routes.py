@@ -35,7 +35,14 @@ class TestRoutes(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_notes_pages_availability(self):
+    def test_pages_availability_for_auth_user(self):
+        for name in ('notes:add', 'notes:list', 'notes:success'):
+            with self.subTest(name=name):
+                url = reverse(name)
+                response = self.auth_not_author.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_notes_pages_for_diferent_auth_user(self):
         for user, status_code in (
             (self.auth_author, HTTPStatus.OK),
             (self.auth_not_author, HTTPStatus.NOT_FOUND)
