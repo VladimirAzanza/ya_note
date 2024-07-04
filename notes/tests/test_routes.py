@@ -1,74 +1,81 @@
 from http import HTTPStatus
 
-from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
 from django.urls import reverse
 
-from notes.models import Note
+from .test_common import TestCommon
 
 
-User = get_user_model()
-
-
-class TestRoutes(TestCase):
+class TestRoutes(TestCommon):
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Лев Толстой')
-        cls.not_author = User.objects.create(username='Peter Pan')
-        cls.note = Note.objects.create(
-            title='Заголовок', text='Текст', author=cls.author
-        )
-        cls.auth_author = Client()
-        cls.auth_author.force_login(cls.author)
-        cls.auth_not_author = Client()
-        cls.auth_not_author.force_login(cls.not_author)
-
-    def test_authentification_pages_availability(self):
-        for name in (
+        super().setUpTestData()
+        cls.public_urls = (
             'users:login',
             'users:logout',
             'users:signup',
             'notes:home'
-        ):
+        )
+        cls.private_auth_urls = (
+            'notes:add',
+            'notes:list',
+            'notes:success',
+        )
+        cls.author_notes_urls = (
+            ('notes:edit', (cls.note.slug,)),
+            ('notes:detail', (cls.note.slug,)),
+            ('notes:delete', (cls.note.slug,)),
+        )
+        cls.all_notes_urls = tuple(
+            (name, None) for name in cls.private_auth_urls
+        ) + cls.author_notes_urls
+
+    def test_authentification_pages_availability(self):
+        """
+        Test the availability of public pages by checking their HTTP
+        status code.
+        """
+        for name in self.public_urls:
             with self.subTest(name=name):
                 url = reverse(name)
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_auth_user(self):
-        for name in ('notes:add', 'notes:list', 'notes:success'):
+        """
+        Test the availability of private pages by checking their HTTP
+        status code.
+        """
+        for name in self.private_auth_urls:
             with self.subTest(name=name):
                 url = reverse(name)
-                response = self.auth_not_author.get(url)
+                response = self.auth_reader.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_notes_pages_for_diferent_auth_user(self):
+        """
+        Test if the pages associated with author notes are correctly
+        accessible to edit or delete by the author and return a 404
+        status for unauthorized not author users.
+        """
         for user, status_code in (
             (self.auth_author, HTTPStatus.OK),
-            (self.auth_not_author, HTTPStatus.NOT_FOUND)
+            (self.auth_reader, HTTPStatus.NOT_FOUND)
         ):
             with self.subTest(user=user, status_code=status_code):
-                for name, args in (
-                    ('notes:edit', (self.note.slug,)),
-                    ('notes:detail', (self.note.slug,)),
-                    ('notes:delete', (self.note.slug,)),
-                ):
+                for name, args in self.author_notes_urls:
                     with self.subTest(name=name, args=args):
                         url = reverse(name, args=args)
                         response = user.get(url)
                         self.assertEqual(response.status_code, status_code)
 
     def test_redirect_for_anonymous_client(self):
-        for name, args in (
-            ('notes:add', None),
-            ('notes:edit', (self.note.slug,)),
-            ('notes:detail', (self.note.slug,)),
-            ('notes:delete', (self.note.slug,)),
-            ('notes:list', None),
-            ('notes:success', None)
-        ):
+        """
+        Test the redirection to login page when anonymous users try to
+        enter private URLs.
+        """
+        for name, args in self.all_notes_urls:
             with self.subTest(name=name):
                 url = reverse(name, args=args)
-                redirect_url = f"{reverse('users:login')}?next={url}"
+                redirect_url = f"{self.login_url}?next={url}"
                 response = self.client.get(url)
                 self.assertRedirects(response, redirect_url)
